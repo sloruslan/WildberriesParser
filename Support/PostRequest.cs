@@ -65,25 +65,5 @@ namespace BlablacarApi
 
             }
         }
-
-        public void Run()
-        {
-            _request = (HttpWebRequest)WebRequest.Create(_address);
-            _request.Method = "POST";
-
-            try
-            {
-                HttpWebResponse response = (HttpWebResponse)_request.GetResponse();
-                var stream = response.GetResponseStream();
-                if (stream != null)
-                {
-                    Response = new StreamReader(stream).ReadToEnd();
-                }
-            }
-            catch (Exception)
-            {
-
-            } 
-        }
     }
 }
