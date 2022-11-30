@@ -18,6 +18,8 @@ namespace BlablacarApi
         public string Host { get; set; }
         public string Data { get; set; }
         public string ContentType { get; set; }
+        public string Referer { get; set; }
+        public string UserAgent { get; set; }
         public WebProxy Proxy { get; set; }
 
         public PostRequest(string address)
@@ -35,6 +37,8 @@ namespace BlablacarApi
             _request.Accept = Accept;
             _request.Host = Host;
             _request.ContentType = ContentType;
+            _request.UserAgent = UserAgent;
+            _request.Referer = Referer;
 
 
             byte[] sentData = Encoding.UTF8.GetBytes(Data);
