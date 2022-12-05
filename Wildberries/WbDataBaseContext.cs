@@ -4,23 +4,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Wildberries;
+using Wildberries.Shared.Domain.Entity;
 
-namespace Server.Infrastructure
+namespace Wildberries
 {
-    public class CardContext : DbContext
+    public class WbDataBaseContext : DbContext
     {
         public DbSet<CardEntity> Card { get; set; }
-
+        public DbSet<UserEntity> User { get; set; }
         private string _connectionString;
 
-        public CardContext(string connectionString)
+        public WbDataBaseContext(string connectionString)
         {
             _connectionString = connectionString;
             Database.EnsureCreated();
         }
 
-        public CardContext()
+        public WbDataBaseContext()
         {
             Database.EnsureCreated();
         }
@@ -33,13 +33,31 @@ namespace Server.Infrastructure
         {
             optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=Wildberries;Username=postgres;Password=32167");
             //optionsBuilder.UseSqlite(_connectionString);
-            
+
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<UserEntity>()
+               .HasKey(e => e.Id);
+
             modelBuilder.Entity<CardEntity>()
                .HasKey(e => e.Id);
+
+            modelBuilder.Entity<TimePoint>()
+               .HasKey(e => e.Id);
+
+            modelBuilder.Entity<UserEntity>()
+                .HasMany(x => x.UserProduct)
+                .WithOne(x => x.User)
+                //.HasForeignKey(x => x.Id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CardEntity>()
+                .HasMany(x => x.TimePoint)
+                .WithOne(x => x.Card)
+                //.HasForeignKey(x =>x.Id)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
