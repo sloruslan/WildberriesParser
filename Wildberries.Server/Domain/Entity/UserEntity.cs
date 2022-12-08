@@ -5,10 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Wildberries.Shared.Domain.Entity
+namespace Wildberries.Server.Domain.Entity
 {
     public class UserEntity
     {
+        [Key]
         public long Id { get; set; }
 
         public string FirstName { get; set; } = string.Empty;

@@ -4,71 +4,90 @@ using Telegram.Bot.Types;
 using Wildberries.Shared.Domain.Entity;
 using Microsoft.EntityFrameworkCore;
 using Wildberries;
+using Wildberries.Shared;
+using TelegramBot;
+using Telegram.Bot.Types.ReplyMarkups;
 
 class Program
 {
-
     static ITelegramBotClient bot = new TelegramBotClient("5658520744:AAHJ3fPiIHqBavqOSoxdvfr0LaoxMjGWYsI");
+
+    
     public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
-
         if (update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
         {
+            
             var message = update.Message;
-            var idFromMessage = message.From.Id;
-            UserEntity currentUser = null;
-            if (message != null)
-            {
-                if (message.From != null)
-                {
-                    using (var db = new WbDataBaseContext())
-                    {
-                        if (!db.User.Any(x => x.Id.Equals(idFromMessage)))
-                        {
-                            currentUser = new UserEntity()
-                            {
-                                Id = idFromMessage,
-                                FirstName = message.From.FirstName ?? string.Empty,
-                                LanguageCode = message.From.LanguageCode ?? string.Empty,
-                                LastName = message.From.LastName ?? string.Empty,
-                                Username = message.From.Username ?? string.Empty,
-                                IsBot = message.From.IsBot,
-                                UserProduct = new List<CardEntity>()
-                            };
-                            //db.User.Where(x => x.Id.Equals(idFromMessage)).Include(x => x.UserProduct).FirstOrDefault();
-                            db.User.Add(currentUser);
-                            db.SaveChanges();
-                        }
-                        else
-                        {
-                            currentUser = db.User.Where(x => x.Id.Equals(idFromMessage)).Include(x => x.UserProduct).ThenInclude(x => x.TimePoint).FirstOrDefault();
-                        }
-                    }
-                }
-                if (message.Text != null)
-                {
-                    if (message.Text.Contains("https://wildberries.ru/catalog/"))
-                    {
-                        var start = message.Text.IndexOf("https://wildberries.ru/catalog/") + 31;
-                        var end = message.Text.IndexOf("/detail.aspx", start);
-                        var idProduct = message.Text.Substring(start, end - start);
-                        if (idProduct != null)
-                        {
-                            using (var db = new WbDataBaseContext())
-                            {
-                                db.User.Where(x => x.Id == idFromMessage).FirstOrDefault().UserProduct.Add(new CardEntity() { Id = Convert.ToInt32(idProduct) });
-                                db.SaveChanges();
-                            }
 
-                            await botClient.SendTextMessageAsync(message.Chat, "Товар добавлен в базу для отслеживания");
-                        }
+            switch (message?.Text)
+            {
+                case "/start":
+                    {
+                        await botClient.SendTextMessageAsync(message.Chat, "Добро пожаловать в отслеживатель цен на Wildberries! Просто пришли мне ссылку на товар и я добавлю его в список отслеживания.");
+                        break;
                     }
-                }
+
+                case "/myproducts":
+                    {
+                        await GetMyProducts(botClient, message);
+                        break;
+                    }
+
+                default:
+                    {
+                        await AnotherCommand(botClient, message);
+                    }
+                    break;
             }
+            
         }
     }
 
+    private static async void ObserveData(ITelegramBotClient botClient)
+    {
+        try
+        {
+            while (true)
+            {
+                using (var db = new WbDataBaseContext())
+                {
+                    var Products = db.Card.Include(x => x.User).ToList();
+                    for (int i = 0; i < Products.Count; i++)
+                    {
+                        Products[i] = Parsing.ParseData(Products[i]);
+                        if (Products[i].SalePrice.Count > 2)
+                        {
+                            var newPrice = Products[i].SalePrice[Products[i].SalePrice.Count - 1];
+                            var oldPrice = Products[i].SalePrice[Products[i].SalePrice.Count - 2];
+                            if (newPrice != oldPrice)
+                            {
+                                await botClient.SendTextMessageAsync(Products[i].User.Id, 
+                                    $"Товар \n {Products[i].Url} \n изменил цену с {oldPrice/100}.{oldPrice % 100} р. на {newPrice/100}{newPrice % 100}");
+                            } 
+                        }
+                        if (Products[i].SalePrice.Count > 100)
+                        {
+                            Products[i].SalePrice.Clear();
+                            Products[i].Time.Clear();
+                        }
+                    }
+                    db.SaveChanges();
 
+                }
+
+                await Task.Delay(600000);
+            }
+        }
+        catch (Exception)
+        {
+ 
+        }
+        
+        
+
+
+    }
     
 
     public static async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
@@ -78,9 +97,146 @@ class Program
     }
 
 
+    private static async Task AnotherCommand(ITelegramBotClient botClient, Message? message)
+    {
+        var idFromMessage = message.From.Id;
+        UserEntity currentUser = null;
+        if (message != null)
+        {
+            if (message.From != null)
+            {
+                using (var db = new WbDataBaseContext())
+                {
+                    if (!db.User.Any(x => x.Id.Equals(idFromMessage)))
+                    {
+                        currentUser = new UserEntity()
+                        {
+                            Id = idFromMessage,
+                            FirstName = message.From.FirstName ?? string.Empty,
+                            LanguageCode = message.From.LanguageCode ?? string.Empty,
+                            LastName = message.From.LastName ?? string.Empty,
+                            Username = message.From.Username ?? string.Empty,
+                            IsBot = message.From.IsBot,
+                            UserProduct = new List<CardEntity>()
+                        };
+
+                        db.User.Add(currentUser);
+                        db.SaveChanges();
+                    }
+                }
+            }
+            var findString = "wildberries.ru/catalog/";
+            if (message.Text != null)
+            {
+                if (message.Text.Contains(findString))
+                {
+                    var start = message.Text.IndexOf(findString) + findString.Length;
+                    var end = message.Text.IndexOf("/detail.aspx", start);
+                    if (end == -1)
+                    {
+                        return;
+                    }
+                    var idProduct = message.Text.Substring(start, end - start);
+                    if (idProduct != null)
+                    {
+                        using (var db = new WbDataBaseContext())
+                        {
+                            var currUser = db.User.Include(x => x.UserProduct).FirstOrDefault(x => x.Id == idFromMessage);
+                            if (currUser != null)
+                            {
+                                if (currUser.UserProduct.Any(x => x.Article == Convert.ToInt64(idProduct)))
+                                {
+                                    var currProduct = currUser.UserProduct.FirstOrDefault(x => x.Article == Convert.ToInt64(idProduct));
+                                    if (currProduct.SalePrice.Count > 1)
+                                    {
+                                        await botClient.SendTextMessageAsync(message.Chat, $"Такой товар уже остлеживается\n Последняя проверка цены была\n " +
+                                            $"{currProduct.Time.Last().LocalDateTime} \n" +
+                                            $"Цена без учета личной скидки -  {currProduct.SalePrice.Last() / 100}.{currProduct.SalePrice.Last() % 100} рублей");
+                                    }
+                                    else
+                                    {
+                                        currProduct = Parsing.ParseData(currProduct);
+                                        await botClient.SendTextMessageAsync(message.Chat, $"Такой товар уже есть остлеживается.\n Последняя проверка цены была " +
+                                            $"{currProduct.Time.Last().LocalDateTime} - {currProduct.SalePrice.Last() / 100}.{currProduct.SalePrice.Last() % 100} рублей");
+                                    }
+
+                                    return;
+                                }
+                                else
+                                {
+                                    var product = new CardEntity()
+                                    {
+                                        Article = Convert.ToInt64(idProduct)
+                                    };
+                                    product = Parsing.ParseData(product);
+                                    currUser.UserProduct.Add(product);
+                                    db.User.Update(currUser);
+                                    db.SaveChanges();
+
+                                    await botClient.SendTextMessageAsync(message.Chat.Id, "Товар добавлен в базу для отслеживания");
+                                }
+
+
+                            }
+                        }
+
+
+
+                    }
+                }
+            }
+        }
+    }
+
+    private static async Task GetMyProducts(ITelegramBotClient botClient, Message? message)
+    {
+        var idFromMessage = message.From.Id;
+        UserEntity currentUser = null;
+        if (message != null)
+        {
+            if (message.From != null)
+            {
+                using (var db = new WbDataBaseContext())
+                {
+                    if (!db.User.Any(x => x.Id.Equals(idFromMessage)))
+                    {
+                        currentUser = new UserEntity()
+                        {
+                            Id = idFromMessage,
+                            FirstName = message.From.FirstName ?? string.Empty,
+                            LanguageCode = message.From.LanguageCode ?? string.Empty,
+                            LastName = message.From.LastName ?? string.Empty,
+                            Username = message.From.Username ?? string.Empty,
+                            IsBot = message.From.IsBot,
+                            UserProduct = new List<CardEntity>()
+                        };
+
+                        db.User.Add(currentUser);
+                        db.SaveChanges();
+                        await botClient.SendTextMessageAsync(message.Chat.Id, "Ваш список товаров пока пуст");
+                    }
+                    else
+                    {
+                        currentUser = db.User.Include(x => x.UserProduct).FirstOrDefault(x => x.Id.Equals(idFromMessage));
+                        var listProduct = currentUser.UserProduct;
+                        var listProductStr = "Ваш список товаров:\n\n";
+                        for (int i = 0; i < listProduct.Count; i++)
+                        {
+                            listProductStr += $"\n{i+1} {listProduct[i].Name}\n{listProduct[i].Url}\n";
+                        }
+                        
+                        await botClient.SendTextMessageAsync(message.Chat.Id, listProductStr);
+                    }
+                }
+            }
+        }
+    }
+
     static void Main(string[] args)
     {
         Console.WriteLine("Запущен бот " + bot.GetMeAsync().Result.FirstName);
+
+        ObserveData(bot);
 
         var cts = new CancellationTokenSource();
         var cancellationToken = cts.Token;
@@ -95,6 +251,7 @@ class Program
             cancellationToken
         );
         Console.ReadLine();
+       
     }
 }
 

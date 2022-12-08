@@ -5,7 +5,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlablacarApi
+namespace Support
 {
     public class GetRequest
     {
@@ -73,7 +73,7 @@ namespace BlablacarApi
             catch (Exception)
             {
 
-            } 
+            }
         }
     }
 }

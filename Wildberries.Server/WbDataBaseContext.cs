@@ -4,23 +4,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Wildberries.Shared.Domain.Entity;
+using Wildberries.Server.Domain.Entity;
 
-namespace Wildberries
+namespace Wildberries.Server
 {
     public class WbDataBaseContext : DbContext
     {
         public DbSet<CardEntity> Card { get; set; }
         public DbSet<UserEntity> User { get; set; }
-        private string _connectionString;
-
-        public WbDataBaseContext(string connectionString)
-        {
-            _connectionString = connectionString;
-            Database.EnsureCreated();
-        }
-
-        public WbDataBaseContext()
+       
+        public WbDataBaseContext() : base()
         {
             Database.EnsureCreated();
         }

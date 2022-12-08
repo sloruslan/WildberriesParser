@@ -5,7 +5,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlablacarApi
+namespace Support
 {
     public class PostRequest
     {
@@ -43,7 +43,7 @@ namespace BlablacarApi
 
             byte[] sentData = Encoding.UTF8.GetBytes(Data);
             _request.ContentLength = sentData.Length;
-            Stream sendStream= _request.GetRequestStream();
+            Stream sendStream = _request.GetRequestStream();
             sendStream.Write(sentData, 0, sentData.Length);
             sendStream.Close();
 

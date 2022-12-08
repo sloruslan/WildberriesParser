@@ -9,31 +9,16 @@ namespace Wildberries.Shared.Domain.Entity
 {
     public class CardEntity
     {
-        [Key]
         public int Id { get; set; }
-
+        public long Article { get; set; }
         public string Name { get; set; } = string.Empty;
         public int AveragePrice { get; set; }
         public int MainPrice { get; set; }
-        public int SalePrice { get; set; }
+        public List<int> SalePrice { get; set; } = new List<int>();
         public string Url { get; set; } = string.Empty;
-
-        public List<TimePoint> TimePoint { get; set; } = new List<TimePoint>();
-
-        public UserEntity? User { get; set; }
+        public List<DateTimeOffset> Time { get; set; } = new List<DateTimeOffset>();
+        public UserEntity User { get; set; } = new UserEntity();
 
     }
 
-
-    public class TimePoint
-    {
-        [Key]
-        public int Id { get; set; }
-
-        public DateTimeOffset Time { get; set; }
-
-        public long Price { get; set; }
-
-        public CardEntity? Card { get; set; }
-    }
 }
