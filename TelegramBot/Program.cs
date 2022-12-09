@@ -24,13 +24,21 @@ class Program
             {
                 case "/start":
                     {
-                        await botClient.SendTextMessageAsync(message.Chat, "Добро пожаловать в отслеживатель цен на Wildberries! Просто пришли мне ссылку на товар и я добавлю его в список отслеживания.");
+                        await botClient.SendTextMessageAsync(message.Chat, "Добро пожаловать в отслеживатель цен на Wildberries!");
+                        await botClient.SendStickerAsync(message.Chat, "CAACAgIAAxkBAAIBp2OTkg0RDKJx8aQQ9tddk__Dw9kcAALYDwACSPJgSxX7xNp4dGuYKwQ");
                         break;
                     }
 
                 case "/myproducts":
                     {
                         await GetMyProducts(botClient, message);
+                        break;
+                    }
+
+                case "/help":
+                    {
+                        await botClient.SendTextMessageAsync(message.Chat, "Просто отправь мне ссылку на товар и я добавлю его в список отслеживания. " +
+                            "Как только цена на товар изменится, я пришлю тебе об этом уведомление.");
                         break;
                     }
 
@@ -62,8 +70,9 @@ class Program
                             var oldPrice = Products[i].SalePrice[Products[i].SalePrice.Count - 2];
                             if (newPrice != oldPrice)
                             {
+                                await botClient.SendStickerAsync(Products[i].User.Id, "CAACAgIAAxkBAAIBrGOTko_-jIPwF9yrCrxRQeDIKrHiAAIYBwACRvusBBMDPSb7UQomKwQ");
                                 await botClient.SendTextMessageAsync(Products[i].User.Id, 
-                                    $"Товар \n {Products[i].Url} \n изменил цену с {oldPrice/100}.{oldPrice % 100} р. на {newPrice/100}{newPrice % 100}");
+                                    $"Товар \n {Products[i].Url} \n изменил цену с {oldPrice/100}.{oldPrice % 100} ₽ на {newPrice/100}.{newPrice % 100} ₽");
                             } 
                         }
                         if (Products[i].SalePrice.Count > 100)
@@ -101,6 +110,7 @@ class Program
     {
         var idFromMessage = message.From.Id;
         UserEntity currentUser = null;
+        
         if (message != null)
         {
             if (message.From != null)
@@ -151,13 +161,13 @@ class Program
                                     {
                                         await botClient.SendTextMessageAsync(message.Chat, $"Такой товар уже остлеживается\n Последняя проверка цены была\n " +
                                             $"{currProduct.Time.Last().LocalDateTime} \n" +
-                                            $"Цена без учета личной скидки -  {currProduct.SalePrice.Last() / 100}.{currProduct.SalePrice.Last() % 100} рублей");
+                                            $"Цена без учета личной скидки -  {currProduct.SalePrice.Last() / 100}.{currProduct.SalePrice.Last() % 100} ₽");
                                     }
                                     else
                                     {
                                         currProduct = Parsing.ParseData(currProduct);
                                         await botClient.SendTextMessageAsync(message.Chat, $"Такой товар уже есть остлеживается.\n Последняя проверка цены была " +
-                                            $"{currProduct.Time.Last().LocalDateTime} - {currProduct.SalePrice.Last() / 100}.{currProduct.SalePrice.Last() % 100} рублей");
+                                            $"{currProduct.Time.Last().LocalDateTime} - {currProduct.SalePrice.Last() / 100}.{currProduct.SalePrice.Last() % 100} ₽");
                                     }
 
                                     return;
@@ -218,14 +228,34 @@ class Program
                     else
                     {
                         currentUser = db.User.Include(x => x.UserProduct).FirstOrDefault(x => x.Id.Equals(idFromMessage));
+                        
                         var listProduct = currentUser.UserProduct;
                         var listProductStr = "Ваш список товаров:\n\n";
-                        for (int i = 0; i < listProduct.Count; i++)
+                        
+                        for (int j = 0; j < listProduct.Count; j+= 10)
                         {
-                            listProductStr += $"\n{i+1} {listProduct[i].Name}\n{listProduct[i].Url}\n";
+                            if (j + 10 > listProduct.Count)
+                            {
+                                for (int i = j; i < listProduct.Count; i++)
+                                {
+                                    listProductStr += $"\n{i + 1} {listProduct[i].Name}\n{listProduct[i].Url}\n";
+                                }
+                                await botClient.SendTextMessageAsync(message.Chat.Id, listProductStr);
+                                listProductStr = "";
+                            }
+                            else
+                            {
+                                for (int i = j; i < j + 10; i++)
+                                {
+                                    listProductStr += $"\n{i + 1} {listProduct[i].Name}\n{listProduct[i].Url}\n";
+                                }
+                                await botClient.SendTextMessageAsync(message.Chat.Id, listProductStr);
+                                listProductStr = "";
+                            }
                         }
                         
-                        await botClient.SendTextMessageAsync(message.Chat.Id, listProductStr);
+                        
+                        
                     }
                 }
             }
