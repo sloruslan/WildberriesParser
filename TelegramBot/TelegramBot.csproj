@@ -1,11 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>free-png.ru-419.ico</ApplicationIcon>
+    <PackageIcon>free-png.ru-419.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="free-png.ru-419.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.0">
@@ -17,6 +23,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Wildberries\Wildberries.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="free-png.ru-419.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
