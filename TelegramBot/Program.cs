@@ -29,6 +29,14 @@ class Program
                         break;
                     }
 
+                case "/getmeurl":
+                    {
+                        await botClient.SendTextMessageAsync(message.Chat, "Добро пожаловать на сайт\n" +
+                            "http://192.168.23.104:5146");
+                        
+                        break;
+                    }
+
                 case "/myproducts":
                     {
                         await GetMyProducts(botClient, message);

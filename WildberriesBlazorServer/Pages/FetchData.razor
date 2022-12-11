@@ -1,0 +1,40 @@
+﻿@page "/fetchdata"
+@using Wildberries.Shared.Domain.Entity;
+@using Wildberries.Shared;
+@using WildberriesBlazorServer.Data
+@inject WeatherForecastService ForecastService
+
+<PageTitle>Таблица товаров</PageTitle>
+
+<h1>Таблица товаров</h1>
+
+@if (Products!= null)
+{
+    <MudDataGrid Items="@Products">
+    <Columns>
+            <Column T="CardEntity" Field="Article"/>
+            <Column T="CardEntity" Field="Name" />
+            <Column T="CardEntity" Field="Url" />
+    </Columns>
+    </MudDataGrid>
+}
+
+
+
+
+@code 
+{
+
+    List<CardEntity> Products { get; set; }
+
+    protected override Task OnParametersSetAsync()
+    {
+        using (var db = new WbDataBaseContext())
+        {
+            Products = db.Card.ToList();
+        }
+        
+        return base.OnParametersSetAsync();
+    
+    }
+}
