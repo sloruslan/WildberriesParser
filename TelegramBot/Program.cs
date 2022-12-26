@@ -68,12 +68,16 @@ class Program
                         {
                             var newPrice = Products[i].SalePrice[Products[i].SalePrice.Count - 1];
                             var oldPrice = Products[i].SalePrice[Products[i].SalePrice.Count - 2];
-                            if (newPrice != oldPrice)
+                            if (newPrice > oldPrice)
                             {
-                                await botClient.SendStickerAsync(Products[i].User.Id, "CAACAgIAAxkBAAIBrGOTko_-jIPwF9yrCrxRQeDIKrHiAAIYBwACRvusBBMDPSb7UQomKwQ");
                                 await botClient.SendTextMessageAsync(Products[i].User.Id, 
-                                    $"Товар \n {Products[i].Url} \n изменил цену с {oldPrice/100}.{oldPrice % 100} ₽ на {newPrice/100}.{newPrice % 100} ₽");
-                            } 
+                                    $"Товар '{Products[i].Name}' \n {Products[i].Url} \n подорожал с {oldPrice/100}.{oldPrice % 100} ₽ на {newPrice/100}.{newPrice % 100} ₽");
+                            }
+                            if (newPrice < oldPrice)
+                            {
+                                await botClient.SendTextMessageAsync(Products[i].User.Id,
+                                    $"Товар '{Products[i].Name}' \n {Products[i].Url} \n подешевел с {oldPrice / 100}.{oldPrice % 100} ₽ на {newPrice / 100}.{newPrice % 100} ₽");
+                            }
                         }
                         if (Products[i].SalePrice.Count > 100)
                         {
@@ -159,14 +163,14 @@ class Program
                                     var currProduct = currUser.UserProduct.FirstOrDefault(x => x.Article == Convert.ToInt64(idProduct));
                                     if (currProduct.SalePrice.Count > 1)
                                     {
-                                        await botClient.SendTextMessageAsync(message.Chat, $"Такой товар уже остлеживается\n Последняя проверка цены была\n " +
+                                        await botClient.SendTextMessageAsync(message.Chat, $"Товар '{currProduct.Name}' уже остлеживается\n Последняя проверка цены была\n " +
                                             $"{currProduct.Time.Last().LocalDateTime} \n" +
                                             $"Цена без учета личной скидки -  {currProduct.SalePrice.Last() / 100}.{currProduct.SalePrice.Last() % 100} ₽");
                                     }
                                     else
                                     {
                                         currProduct = Parsing.ParseData(currProduct);
-                                        await botClient.SendTextMessageAsync(message.Chat, $"Такой товар уже есть остлеживается.\n Последняя проверка цены была " +
+                                        await botClient.SendTextMessageAsync(message.Chat, $"Товар '{currProduct.Name}' уже есть остлеживается.\n Последняя проверка цены была " +
                                             $"{currProduct.Time.Last().LocalDateTime} - {currProduct.SalePrice.Last() / 100}.{currProduct.SalePrice.Last() % 100} ₽");
                                     }
 
