@@ -18,6 +18,7 @@ namespace Wildberries.Shared.Domain.Entity
         public string Url { get; set; } = string.Empty;
         public List<DateTimeOffset> Time { get; set; } = new List<DateTimeOffset>();
         public UserEntity User { get; set; } = new UserEntity();
+        public DateTimeOffset DateOfAddition { get; set; }
 
     }
 

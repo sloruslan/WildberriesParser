@@ -180,7 +180,8 @@ class Program
                                 {
                                     var product = new CardEntity()
                                     {
-                                        Article = Convert.ToInt64(idProduct)
+                                        Article = Convert.ToInt64(idProduct),
+                                        DateOfAddition = DateTimeOffset.UtcNow
                                     };
                                     product = Parsing.ParseData(product);
                                     currUser.UserProduct.Add(product);
@@ -233,7 +234,7 @@ class Program
                     {
                         currentUser = db.User.Include(x => x.UserProduct).FirstOrDefault(x => x.Id.Equals(idFromMessage));
                         
-                        var listProduct = currentUser.UserProduct;
+                        var listProduct = currentUser.UserProduct.OrderBy(x => x.DateOfAddition).ToList();
                         var listProductStr = "Ваш список товаров:\n\n";
                         
                         for (int j = 0; j < listProduct.Count; j+= 10)
@@ -242,7 +243,7 @@ class Program
                             {
                                 for (int i = j; i < listProduct.Count; i++)
                                 {
-                                    listProductStr += $"\n{i + 1} {listProduct[i].Name}\n{listProduct[i].Url}\n";
+                                    listProductStr += $"\n{i + 1} {listProduct[i].Name}\n{listProduct[i].Url}\nДобавлен {listProduct[i].DateOfAddition.LocalDateTime}\n";
                                 }
                                 await botClient.SendTextMessageAsync(message.Chat.Id, listProductStr);
                                 listProductStr = "";
@@ -251,7 +252,7 @@ class Program
                             {
                                 for (int i = j; i < j + 10; i++)
                                 {
-                                    listProductStr += $"\n{i + 1} {listProduct[i].Name}\n{listProduct[i].Url}\n";
+                                    listProductStr += $"\n{i + 1} {listProduct[i].Name}\n{listProduct[i].Url}\nДобавлен {listProduct[i].DateOfAddition.LocalDateTime}\n";
                                 }
                                 await botClient.SendTextMessageAsync(message.Chat.Id, listProductStr);
                                 listProductStr = "";
