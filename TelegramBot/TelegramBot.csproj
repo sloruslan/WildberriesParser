@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <ApplicationIcon>free-png.ru-419.ico</ApplicationIcon>
     <PackageIcon>free-png.ru-419.png</PackageIcon>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
